@@ -1,0 +1,44 @@
+version: '3.0'
+
+services:
+  redisnextcloud:
+    container_name: redisnextcloud
+    image: redis:alpine
+    command: redis-server --requirepass ${REDIS_PASSWORD:?}
+    restart: unless-stopped
+
+  dbnextcloud:
+    container_name: dbnextcloud
+    image: mariadb
+    restart: unless-stopped
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    volumes:
+      - ./db:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?}
+      MYSQL_USER: ${DB_USER:?}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?}
+      MYSQL_DATABASE: ${DB_NAME:?}
+
+  nextcloud:
+    image: nextcloud:latest
+    container_name: nextcloud
+    environment:
+      - TZ=${TZ}
+      - MYSQL_PASSWORD=${DB_PASSWORD:?}
+      - MYSQL_USER=${DB_USER:?}
+      - MYSQL_DATABASE=${DB_NAME:?}
+      - MYSQL_HOST=dbnextcloud
+      - REDIS_HOST=redisnextcloud
+      - REDIS_HOST_PASS=${REDIS_PASSWORD:?}
+      - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER:?}
+      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD:?}
+      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS:?}
+    volumes:
+      - ./data:/var/www/html
+    ports:
+      - 8080:80
+    restart: unless-stopped
+    depends_on:
+      - dbnextcloud
+      - redisnextcloud

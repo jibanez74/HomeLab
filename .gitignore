@@ -1,0 +1,15 @@
+.env
+
+/bitwarden/data
+
+/plex/config
+
+/nextcloud/db
+/nextcloud/data
+
+/photoprism/db
+/photoprism/storage
+/photoprism/photos
+
+/wordpress/db
+/wordpress/data
