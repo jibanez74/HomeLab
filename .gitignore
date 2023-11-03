@@ -13,3 +13,7 @@
 
 /wordpress/db
 /wordpress/data
+
+.idea
+.vscode
+.DStore
