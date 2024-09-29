@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   wordpressdb:
     container_name: dbwordpressdb

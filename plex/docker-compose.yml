@@ -1,21 +1,18 @@
-version: "3"
-
 services:
   plex:
+    runtime: nvidia
     image: lscr.io/linuxserver/plex:latest
     container_name: plex
     network_mode: host
-    ports:
-      - 32400:32400
     environment:
+      - NVIDIA_VISIBLE_DEVICES=all
       - PUID=1000
       - PGID=1000
-      - NVIDIA_VISIBLE_DEVICES="all"
+      - TZ=Etc/UTC
+      - VERSION=docker
     volumes:
-      - ./config:/config
-      - /plexmedia/zfs/shows:/tv
-      - /plexmedia/zfs/movies:/movies
-      - /warehouse/media/music:/music
-      - /warehouse/media/extras:/extras
-      - /warehouse/media/photos:/photos
+      - ./plex_config:/config
+      - /path/to/tv:/tv
+      - /path/to/movies:/movies
+      - /path/to/music:/music
     restart: unless-stopped

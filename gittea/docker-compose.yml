@@ -1,0 +1,38 @@
+networks:
+  gitea:
+    external: false
+
+services:
+  gittea:
+    image: gitea/gitea:1.22.2
+    container_name: gitea
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+    restart: always
+    networks:
+      - gitea
+    volumes:
+      - ./gitea:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "3000:3000"
+      - "222:22"
+
+  mariadb:
+    image: lscr.io/linuxserver/mariadb:latest
+    container_name: mariadb
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      # - MYSQL_ROOT_PASSWORD=ROOT_ACCESS_PASSWORD
+      # - MYSQL_DATABASE=USER_DB_NAME #optional
+      # - MYSQL_USER=MYSQL_USER #optional
+      # - MYSQL_PASSWORD=DATABASE_PASSWORD #optional
+    volumes:
+      - ./config:/config
+    ports:
+      - 3306:3306
+    restart: unless-stopped
