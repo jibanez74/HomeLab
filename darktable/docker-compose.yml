@@ -2,12 +2,15 @@ services:
   darktable:
     image: lscr.io/linuxserver/darktable:latest
     container_name: darktable
-    security_opt:
-      - seccomp:unconfined #optional
+    runtime: nvidia
     environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
       - PUID=1000
       - PGID=1000
       - TZ=America/Puerto_Rico
+    security_opt:
+      - seccomp:unconfined #optional
     volumes:
       - ./darktable_config:/config
     ports:
