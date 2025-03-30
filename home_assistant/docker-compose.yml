@@ -1,0 +1,19 @@
+services:
+  homeassistant:
+    image: lscr.io/linuxserver/homeassistant:latest
+    container_name: homeassistant
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - ./homeassistant_config:/config
+      - /var/run/dbus:/var/run/dbus:ro
+    ports:
+      - 8123:8123 #optional
+      - /path/to/device:/path/to/device #optional
+    restart: unless-stopped
