@@ -1,0 +1,19 @@
+services:
+  stirling-pdf:
+    container_name: stirling-pdf
+    image: docker.stirlingpdf.com/stirlingtools/stirling-pdf:latest
+    ports:
+      - '8082:8080'
+    volumes:
+      - ./StirlingPDF/trainingData:/usr/share/tessdata 
+      - ./StirlingPDF/extraConfigs:/configs
+      - ./StirlingPDF/customFiles:/customFiles/
+      - ./StirlingPDF/logs:/logs/
+      - ./StirlingPDF/pipeline:/pipeline/
+    environment:
+      - UI_APPNAME=${APP_NAME}
+      - UI_HOMEDESCRIPTION=${APP_DESCRIPTION}
+      - UI_APPNAVBARNAME=${NAVBAR_NAME}
+      - DOCKER_ENABLE_SECURITY=false
+      - LANGS=en_GB
+    restart: unless-stopped
