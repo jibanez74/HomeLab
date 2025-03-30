@@ -15,5 +15,4 @@ services:
       - /var/run/dbus:/var/run/dbus:ro
     ports:
       - 8123:8123 #optional
-      - /path/to/device:/path/to/device #optional
     restart: unless-stopped
