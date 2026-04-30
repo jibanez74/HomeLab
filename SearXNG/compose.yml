@@ -1,0 +1,56 @@
+services:
+  ts-authkey-search:
+    image: tailscale/tailscale:latest
+    container_name: ts-authkey-search
+    hostname: ${HOSTNAME}
+    environment:
+      - TS_AUTHKEY=${TS_KEY}
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+    volumes:
+      - ./tailscale-state-search:/var/lib/tailscale
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+    healthcheck:
+      test: ["CMD", "tailscale", "status", "--peers=false"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  searxng:
+    container_name: search
+    image: docker.io/searxng/searxng:${SEARXNG_VERSION:-latest}
+    network_mode: service:ts-authkey-search
+    depends_on:
+      ts-authkey-search:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: always
+    volumes:
+      - ./core-config/:/etc/searxng/:Z
+      - ./core-data:/var/cache/searxng/
+
+  valkey:
+    container_name: search-cache
+    image: docker.io/valkey/valkey:9-alpine
+    command: valkey-server --save 30 1 --loglevel warning
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: always
+    volumes:
+      - ./valkey-data:/data/

@@ -1,0 +1,48 @@
+services:
+  ts-authkey-jellyfin:
+    image: tailscale/tailscale:${TAILSCALE_IMAGE_TAG:-latest}
+    container_name: ts-authkey-jellyfin
+    hostname: ${JELLYFIN_HOSTNAME:?}
+    environment:
+      - TS_AUTHKEY=${TS_KEY:?}
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+    volumes:
+      - ./tailscale-state-jellyfin:/var/lib/tailscale
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+    healthcheck:
+      test: ["CMD", "tailscale", "status", "--peers=false"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  jellyfin:
+    runtime: nvidia
+    image: lscr.io/linuxserver/jellyfin:${JELLYFIN_IMAGE_TAG:-latest}
+    container_name: jellyfin
+    depends_on:
+      ts-authkey-jellyfin:
+        condition: service_healthy
+    network_mode: service:ts-authkey-jellyfin
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8096/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Etc/UTC}
+    volumes:
+      - ./jellyfin_config:/config
+      - ${TV_SHOWS_PATH:?}:/data/tvshows:ro
+      - ${MOVIES_PATH:?}:/data/movies:ro
+      - ${MUSIC_PATH:?}:/data/music:ro
+    restart: unless-stopped

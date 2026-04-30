@@ -1,0 +1,64 @@
+services:
+  wordpress-db:
+    container_name: dbwordpressdb
+    image: mariadb:${MARIADB_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -u \"$$MYSQL_USER\" --password=\"$$MYSQL_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    volumes:
+      - ./db:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?}
+      MYSQL_USER: ${DB_USER:?}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?}
+      MYSQL_DATABASE: ${DB_NAME:?}
+
+  redis:
+    container_name: rediswordpress
+    image: redis:${REDIS_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - ./redis:/data
+
+  wordpress:
+    container_name: wordpress
+    depends_on:
+      wordpress-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    image: wordpress:${WORDPRESS_IMAGE_TAG:-latest}
+    ports:
+      - "8000:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    environment:
+      WORDPRESS_DB_HOST: wordpress-db:3306
+      WORDPRESS_DB_USER: ${DB_USER:?}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:?}
+      WORDPRESS_DB_NAME: ${DB_NAME:?}
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_REDIS_HOST', 'redis');
+        define('WP_REDIS_PORT', 6379);
+        define('WP_CACHE_KEY_SALT', '${WP_CACHE_KEY_SALT:-homelab-wordpress:}');
+    volumes:
+      - ./data:/var/www/html
+      - ./opcache.ini:/usr/local/etc/php/conf.d/opcache.ini
+      - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini

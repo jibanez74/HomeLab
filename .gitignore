@@ -14,6 +14,10 @@
 /wordpress/db
 /wordpress/data
 
+/nodejs_dev/npm-cache
+/nodejs_dev/postgres-data
+/nodejs_dev/workspace/node_modules
+
 .idea
 .vscode
 .DStore

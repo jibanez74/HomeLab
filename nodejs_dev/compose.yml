@@ -1,0 +1,42 @@
+services:
+  postgres:
+    container_name: nodejs-postgres
+    image: postgres:${POSTGRES_IMAGE_TAG:-latest}
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:?}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?}
+      - POSTGRES_DB=${POSTGRES_DB:?}
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  node-dev:
+    container_name: nodejs-dev
+    image: node:${NODE_IMAGE_TAG:-latest}
+    working_dir: /workspace
+    command: tail -f /dev/null
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - TZ=${TZ:-Etc/UTC}
+      - DATABASE_URL=postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/${POSTGRES_DB:?}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      - ./workspace:/workspace
+      - ./npm-cache:/home/node/.npm
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped

@@ -1,0 +1,49 @@
+services:
+  ts-authkey-pdf:
+    image: tailscale/tailscale:latest
+    container_name: ts-authkey-pdf
+    hostname: ${PDF_HOSTNAME:?}
+    environment:
+      - TS_AUTHKEY=${TS_KEY:?}
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+    volumes:
+      - ./tailscale-state-pdf:/var/lib/tailscale
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+    healthcheck:
+      test: ["CMD", "tailscale", "status", "--peers=false"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  stirling-pdf:
+    container_name: stirling-pdf
+    image: docker.stirlingpdf.com/stirlingtools/stirling-pdf:latest
+    depends_on:
+      ts-authkey-pdf:
+        condition: service_healthy
+    network_mode: service:ts-authkey-pdf
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    volumes:
+      - ./StirlingPDF/trainingData:/usr/share/tessdata 
+      - ./StirlingPDF/extraConfigs:/configs
+      - ./StirlingPDF/customFiles:/customFiles/
+      - ./StirlingPDF/logs:/logs/
+      - ./StirlingPDF/pipeline:/pipeline/
+    environment:
+      - UI_APPNAME=${APP_NAME}
+      - UI_HOMEDESCRIPTION=${APP_DESCRIPTION}
+      - UI_APPNAVBARNAME=${NAVBAR_NAME}
+      - DOCKER_ENABLE_SECURITY=false
+      - LANGS=en_GB
+    restart: unless-stopped
