@@ -1,0 +1,72 @@
+services:
+  ts-authkey-forgejo:
+    image: tailscale/tailscale:${TAILSCALE_IMAGE_TAG:-latest}
+    container_name: ts-authkey-forgejo
+    hostname: ${FORGEJO_HOSTNAME:-forgejo}
+    environment:
+      - TS_AUTHKEY=${TS_KEY:?}
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+      - TS_AUTH_ONCE=true
+    volumes:
+      - ${TAILSCALE_STATE_PATH:-./tailscale-state-forgejo}:/var/lib/tailscale
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+    healthcheck:
+      test: ["CMD", "tailscale", "status", "--peers=false"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  forgejo-db:
+    image: postgres:${POSTGRES_IMAGE_TAG:-14}
+    container_name: forgejo-db
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-forgejo}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?}
+      - POSTGRES_DB=${POSTGRES_DB:-forgejo}
+    volumes:
+      - ${POSTGRES_DATA_PATH:-./postgres}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  forgejo:
+    image: codeberg.org/forgejo/forgejo:${FORGEJO_IMAGE_TAG:-13}
+    container_name: forgejo
+    depends_on:
+      forgejo-db:
+        condition: service_healthy
+      ts-authkey-forgejo:
+        condition: service_healthy
+    network_mode: service:ts-authkey-forgejo
+    environment:
+      - USER_UID=${USER_UID:-1000}
+      - USER_GID=${USER_GID:-1000}
+      - FORGEJO__database__DB_TYPE=postgres
+      - FORGEJO__database__HOST=forgejo-db:5432
+      - FORGEJO__database__USER=${POSTGRES_USER:-forgejo}
+      - FORGEJO__database__NAME=${POSTGRES_DB:-forgejo}
+      - FORGEJO__database__PASSWD=${POSTGRES_PASSWORD:?}
+      - FORGEJO__server__DOMAIN=${FORGEJO_DOMAIN:-forgejo}
+      - FORGEJO__server__ROOT_URL=${FORGEJO_ROOT_URL:-http://forgejo:3000/}
+      - FORGEJO__server__SSH_DOMAIN=${FORGEJO_SSH_DOMAIN:-forgejo}
+    volumes:
+      - ${FORGEJO_DATA_PATH:-./forgejo-data}:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    restart: unless-stopped

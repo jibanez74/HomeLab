@@ -1,34 +1,58 @@
+# Local environment files
 .env
+**/.env
 
+# OS and editor noise
+.DS_Store
+.idea/
+.vscode/
+
+# Legacy stack data paths kept for safety
 /bitwarden/data
-
-/plex/config
-
 /nextcloud/db
 /nextcloud/data
-
 /photoprism/db
 /photoprism/storage
 /photoprism/photos
+/plex/config
 
+# WordPress
 /wordpress/db
 /wordpress/data
+/wordpress/redis
 
+# Immich
 /immich/upload
 /immich/postgres
 /immich/tailscale-state
+/immich/migration-run-*
 
+# Jellyfin
+/jellyfin/jellyfin-config
 /jellyfin/jellyfin_config
 /jellyfin/media
 /jellyfin/tailscale-state-jellyfin
 
+# Pi-hole
 /pihole/etc-pihole
 /pihole/tailscale-state-pihole
 
+# Forgejo
+/forgejo/forgejo-data
+/forgejo/postgres
+/forgejo/tailscale-state-forgejo
+
+# SearXNG
+/SearXNG/core-config
+/SearXNG/core-data
+/SearXNG/tailscale-state-search
+/SearXNG/valkey-data
+
+# Stirling PDF
+/stirling_pdf/StirlingPDF
+/stirling_pdf/tailscale-state-pdf
+
+# Node.js dev stack
 /nodejs_dev/npm-cache
 /nodejs_dev/postgres-data
 /nodejs_dev/workspace/node_modules
-
-.idea
-.vscode
-.DStore
