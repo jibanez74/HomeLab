@@ -1,0 +1,45 @@
+services:
+  ts-authkey-pihole:
+    image: tailscale/tailscale:${TAILSCALE_IMAGE_TAG:-latest}
+    container_name: ts-authkey-pihole
+    hostname: ${PIHOLE_HOSTNAME:-pihole}
+    environment:
+      - TS_AUTHKEY=${TS_KEY:?}
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+      - TS_AUTH_ONCE=true
+    volumes:
+      - ${TAILSCALE_STATE_PATH:-./tailscale-state-pihole}:/var/lib/tailscale
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+    healthcheck:
+      test: ["CMD", "tailscale", "status", "--peers=false"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  pihole:
+    image: pihole/pihole:${PIHOLE_IMAGE_TAG:-latest}
+    container_name: pihole
+    depends_on:
+      ts-authkey-pihole:
+        condition: service_healthy
+    network_mode: service:ts-authkey-pihole
+    environment:
+      TZ: ${TZ:-Etc/UTC}
+      FTLCONF_webserver_api_password: ${PIHOLE_WEBPASSWORD:?}
+      FTLCONF_dns_upstreams: "${PIHOLE_DNS_UPSTREAMS:-1.1.1.1;1.0.0.1}"
+      FTLCONF_dns_listeningMode: ${PIHOLE_DNS_LISTENING_MODE:-all}
+    volumes:
+      - ${PIHOLE_CONFIG_PATH:-./etc-pihole}:/etc/pihole
+    healthcheck:
+      test: ["CMD-SHELL", "dig +short @127.0.0.1 pi.hole >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    restart: unless-stopped

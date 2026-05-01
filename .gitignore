@@ -22,6 +22,9 @@
 /jellyfin/media
 /jellyfin/tailscale-state-jellyfin
 
+/pihole/etc-pihole
+/pihole/tailscale-state-pihole
+
 /nodejs_dev/npm-cache
 /nodejs_dev/postgres-data
 /nodejs_dev/workspace/node_modules
