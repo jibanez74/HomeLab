@@ -14,6 +14,14 @@
 /wordpress/db
 /wordpress/data
 
+/immich/upload
+/immich/postgres
+/immich/tailscale-state
+
+/jellyfin/jellyfin_config
+/jellyfin/media
+/jellyfin/tailscale-state-jellyfin
+
 /nodejs_dev/npm-cache
 /nodejs_dev/postgres-data
 /nodejs_dev/workspace/node_modules

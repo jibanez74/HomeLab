@@ -41,8 +41,8 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-Etc/UTC}
     volumes:
-      - ./jellyfin_config:/config
-      - ${TV_SHOWS_PATH:?}:/data/tvshows:ro
-      - ${MOVIES_PATH:?}:/data/movies:ro
-      - ${MUSIC_PATH:?}:/data/music:ro
+      - ${JELLYFIN_CONFIG_PATH:-./jellyfin-config}:/config
+      - ${TV_SHOWS_PATH:-./media/tvshows}:/data/tvshows:ro
+      - ${MOVIES_PATH:-./media/movies}:/data/movies:ro
+      - ${MUSIC_PATH:-./media/music}:/data/music:ro
     restart: unless-stopped
