@@ -46,3 +46,21 @@ docker compose --env-file .env -f compose.yml config
 docker compose --env-file .env -f compose.yml up -d
 ```
 
+## Secret Safety
+
+This repo includes both CI and local secret scanning:
+
+- GitHub Actions runs Gitleaks on pushes, pull requests, and manual dispatches.
+- A local pre-commit hook template is available in `.githooks/pre-commit`.
+
+Install the local hook once per clone:
+
+```sh
+./scripts/install-git-hooks.sh
+```
+
+The local hook expects `gitleaks` to be installed. On macOS:
+
+```sh
+brew install gitleaks
+```
